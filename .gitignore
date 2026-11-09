@@ -1,0 +1,26 @@
+# Local student records
+students.json
+students.tmp
+
+# Python and virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Credentials and machine-specific settings
+.env
+.env.*
+!.env.example
+.vscode/
+*.code-workspace
+launch.json
+settings.json
+.DS_Store
+Thumbs.db
+
+# Original JavaScript learning scratchpad
+script.js

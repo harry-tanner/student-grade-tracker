@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Student Grade Tracker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar"><div class="brand"><span class="logo" aria-hidden="true">G</span> Gradebook<span class="badge">CLASSROOM</span></div><span class="local">Your local workspace</span></header>
+  <main>
+    <div class="intro"><div><p class="eyebrow">A LITTLE CLARITY FOR YOUR CLASS</p><h1>Student Grade Tracker<span>.</span></h1><p class="subtitle">Keep results together. See how your class is doing.</p></div><a class="outline" href="#add-student">+ Add a student</a></div>
+
+    <section class="averages" aria-label="Class averages">
+      <article class="stat count"><p>Students enrolled</p><strong>{{ students|length }}</strong><span>Your class, at a glance</span></article>
+      {% for subject in subjects %}
+      <article class="stat {{ subject }}"><p>{{ subject|title }} average</p><strong>{{ '%.2f'|format(averages[subject]) if averages[subject] is not none else '—' }}<small> / 100</small></strong><span>Class average</span></article>
+      {% endfor %}
+      <article class="stat overall"><p>Overall class average</p><strong>{{ '%.2f'|format(combined) if combined is not none else '—' }}<small> / 300</small></strong><span>{{ '%.2f%% across all subjects'|format(combined / 3) if combined is not none else 'All three subjects combined' }}</span></article>
+    </section>
+
+    {% if error %}<div class="notice error" role="alert">{{ error }}</div>{% endif %}
+    {% if added and not error %}<div class="notice" role="status">Student added. Your class averages are up to date.</div>{% endif %}
+    {% if removed %}<div class="notice" role="status">Student removed. Your class averages are up to date.</div>{% endif %}
+
+    <div class="workspace">
+      <section class="panel form-panel" id="add-student">
+        <div class="panel-heading"><p class="eyebrow">GROW YOUR GRADEBOOK</p><h2>Add a student</h2><p>Enter their exam results to get started.</p></div>
+        <form method="post" action="{{ url_for('index') }}">
+          <label for="name">Student name</label>
+          <input id="name" name="name" placeholder="e.g. Harry Smith" maxlength="100" value="{{ values.get('name', '') }}" required>
+          <p class="score-label">EXAM SCORES <span>Out of 100</span></p>
+          {% for subject in subjects %}
+          <label for="{{ subject }}">{{ subject|title }}</label>
+          <input id="{{ subject }}" name="{{ subject }}" type="number" min="0" max="100" step="1" placeholder="0–100" value="{{ values.get(subject, '') }}" required>
+          {% endfor %}
+          <button type="submit">Add student <span aria-hidden="true">↗</span></button>
+          <p class="form-note">Results are saved on this computer.</p>
+        </form>
+      </section>
+
+      <section class="panel results-panel">
+        <div class="results-heading"><div><p class="eyebrow">ALL IN ONE PLACE</p><h2>Class results</h2></div><span class="pill">{{ students|length }} student{{ '' if students|length == 1 else 's' }}</span></div>
+        <form class="search-form" method="get" action="{{ url_for('index') }}">
+          <label for="search">Find a student</label>
+          <div class="search-controls"><input id="search" name="q" value="{{ query }}" placeholder="Search by name"><button type="submit">Search</button><a href="{{ url_for('index') }}">Clear</a></div>
+          <p class="form-note">Select a student's name to view their profile and edit scores.</p>
+        </form>
+        {% if query %}<p class="search-summary">{{ matches|length }} result{{ '' if matches|length == 1 else 's' }} for “{{ query }}”</p>{% endif %}
+        {% if matches %}
+        <div class="table-scroll"><table><caption class="sr-only">Student exam scores and individual averages, out of 100, ordered from highest average to lowest</caption><thead><tr><th scope="col">Student</th><th scope="col">Maths</th><th scope="col">English</th><th scope="col">Science</th><th scope="col" aria-sort="descending">Average ↓</th><th scope="col">Action</th></tr></thead><tbody>
+        {% for student in matches %}
+          <tr><th scope="row"><span class="avatar" aria-hidden="true">{{ student.name[0]|upper }}</span><a class="student-link" href="{{ url_for('profile', student_id=student.id) }}">{{ student.name }}</a></th><td>{{ student.maths }}</td><td>{{ student.english }}</td><td>{{ student.science }}</td><td><span class="average-score">{{ '%.2f'|format((student.maths + student.english + student.science) / 3) }}</span></td><td><form class="remove-form" method="post" action="{{ url_for('remove_student', student_id=student.id) }}"><button class="remove-button" type="submit" aria-label="Remove {{ student.name }}">Remove</button></form></td></tr>
+        {% endfor %}
+        </tbody></table></div>
+        {% elif query %}
+        <div class="empty"><h3>No matching students</h3><p>Try part of their name or clear your search.</p><a href="{{ url_for('index') }}">Show all students</a></div>
+        {% else %}
+        <div class="empty"><span class="empty-icon" aria-hidden="true">▤</span><h3>A fresh page for your class</h3><p>Add your first student using the form.<br>Their results will appear here.</p><a href="#name">Add your first student →</a></div>
+        {% endif %}
+        <div class="table-footer">Highest average first. Averages update as you add or remove students.</div>
+      </section>
+    </div>
+    <footer>GRADEBOOK <span>Built for a clearer view of learning.</span></footer>
+  </main>
+</body>
+</html>

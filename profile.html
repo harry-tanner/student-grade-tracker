@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ student.name }} · Gradebook</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar"><a class="brand student-link" href="{{ url_for('index') }}"><span class="logo" aria-hidden="true">G</span> Gradebook</a><a class="outline" href="{{ url_for('index') }}">← All students</a></header>
+  <main>
+    <div class="intro"><div><p class="eyebrow">STUDENT PROFILE</p><h1>{{ student.name }}</h1><p class="subtitle">Exam results and practice GCSE-style grades.</p></div></div>
+    {% if error %}<div class="notice error" role="alert">{{ error }}</div>{% endif %}
+    {% if updated and not error %}<div class="notice" role="status">Scores saved. Grades, class averages and class ranking have been updated.</div>{% endif %}
+    <section class="averages profile-stats" aria-label="Student results">
+      {% for subject in subjects %}
+      <article class="stat {{ subject }}"><p>{{ subject|title }}</p><strong>{{ student[subject] }}<small> / 100</small></strong><span class="grade-label">Practice grade {{ student[subject]|grade }}</span></article>
+      {% endfor %}
+      <article class="stat count"><p>All subjects combined</p><strong>{{ total }}<small> / 300</small></strong><span>Average: {{ '%.2f'|format(mean) }}%</span></article>
+    </section>
+    <div class="workspace">
+      <section class="panel form-panel"><div class="panel-heading"><p class="eyebrow">UPDATE RESULTS</p><h2>Edit test scores</h2><p>Enter whole numbers from 0 to 100.</p></div>
+        <form method="post" action="{{ url_for('profile', student_id=student.id) }}">
+          {% for subject in subjects %}
+          <label for="{{ subject }}">{{ subject|title }}</label>
+          <input id="{{ subject }}" name="{{ subject }}" type="number" min="0" max="100" step="1" value="{{ values.get(subject, '') }}" required>
+          {% endfor %}
+          <button type="submit">Save scores</button>
+          <p class="form-note">Changes are saved on this computer.</p>
+        </form>
+      </section>
+      <section class="panel"><div class="panel-heading"><p class="eyebrow">HOW GRADES ARE CALCULATED</p><h2>Practice grade boundaries</h2><p>These classroom boundaries apply to each subject out of 100. They are illustrative, not official GCSE predictions. Actual boundaries vary by subject, tier, exam board and exam series. <a href="https://www.aqa.org.uk/exams-administration/results-days/grade-boundaries">See AQA's guidance.</a></p></div>
+        <table class="boundary-table"><caption class="sr-only">Minimum scores for each practice grade</caption><thead><tr><th scope="col">Practice grade</th><th scope="col">Score out of 100</th></tr></thead><tbody>
+          {% for minimum, grade in boundaries %}<tr><th scope="row">{{ grade }}</th><td>{{ minimum }}–{{ 100 if loop.first else minimum + 9 }}</td></tr>{% endfor %}
+          <tr><th scope="row">U (ungraded)</th><td>0–9</td></tr>
+        </tbody></table>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
